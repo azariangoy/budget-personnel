@@ -1,32 +1,33 @@
 let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
 
+const categoriesRevenus = ["salaire", "business", "vente", "cadeau", "autre revenu"];
+
 function getMonnaie() {
   return document.getElementById("monnaie").value;
 }
 
 function ajouterTransaction() {
-  const description = document.getElementById("description").value.trim();
+  const description = document.getElementById("description").value;
   const montant = parseFloat(document.getElementById("montant").value);
   const categorie = document.getElementById("categorie").value;
   const date = document.getElementById("dateInput").value;
 
-  if (!description || isNaN(montant) || montant <= 0 || !categorie || !date) {
-    alert("Veuillez remplir tous les champs correctement.");
+  if (!description || isNaN(montant) || !categorie || !date) {
+    alert("Veuillez remplir tous les champs !");
     return;
   }
 
-  let type = "depense";
-   if (categorie.toLowerCase().includes("salaire") || categorie.toLowerCase().includes("revenu")) {
-    type = "revenu";
-}
+  const type = categoriesRevenus.includes(categorie.toLowerCase())
+    ? "revenu"
+    : "depense";
 
   const transaction = {
     description,
     montant,
     categorie,
-    date,
-    type,
     monnaie: getMonnaie(),
+    date,
+    type
   };
 
   transactions.push(transaction);
@@ -34,8 +35,6 @@ function ajouterTransaction() {
 
   afficherTransactions();
   calculerSolde();
-
-  
   document.getElementById("description").value = "";
   document.getElementById("montant").value = "";
   document.getElementById("categorie").value = "loyer";
@@ -43,61 +42,45 @@ function ajouterTransaction() {
 }
 
 function afficherTransactions() {
-  const tbody = document.querySelector("#liste-transactions tbody");
-  if (!tbody) {
-    console.error("Le tableau est introuvable !");
+  const liste = document.querySelector("#liste-transactions tbody");
+  if (!liste) {
+    console.error("Élément #liste-transactions tbody non trouvé !");
     return;
   }
 
-  tbody.innerHTML = "";
+  liste.innerHTML = "";
 
-  transactions.forEach(t => {
-    const tr = document.createElement("tr");
-    const couleur = getCouleurCategorie(t.categorie);
+  transactions.forEach((transaction) => {
+    const ligne = document.createElement("tr");
 
-    tr.innerHTML = `
-      <td>${t.date}</td>
-      <td style="color: ${couleur}">${t.categorie}</td>
-      <td class="${t.type === 'revenu' ? 'revenu' : 'depense'}">
-        ${t.type === 'revenu' ? '+' : '-'}${t.montant} ${t.monnaie}
+    ligne.innerHTML = `
+      <td>${transaction.date}</td>
+      <td>${transaction.categorie}</td>
+      <td class="${transaction.type}">
+        ${transaction.type === "revenu" ? "+" : "-"}${transaction.montant} ${transaction.monnaie}
       </td>
-      <td>${t.description}</td>
+      <td>${transaction.description}</td>
     `;
 
-    tbody.appendChild(tr);
+    liste.appendChild(ligne);
   });
 }
 
 function calculerSolde() {
-  let totalFC = 0;
-  let totalDollar = 0;
+  let soldeFC = 0;
+  let soldeUSD = 0;
 
-  transactions.forEach(t => {
-    const montant = t.type === "revenu" ? t.montant : -t.montant;
-
+  transactions.forEach((t) => {
+    const effet = t.type === "revenu" ? 1 : -1;
     if (t.monnaie === "FC") {
-      totalFC += montant;
-    } else if (t.monnaie === "$") {
-      totalDollar += montant;
+      soldeFC += effet * t.montant;
+    } else {
+      soldeUSD += effet * t.montant;
     }
   });
 
-  document.getElementById("solde-fc").textContent = totalFC.toFixed(2);
-  document.getElementById("solde-dollar").textContent = totalDollar.toFixed(2);
-}
-
-function getCouleurCategorie(categorie) {
-  const couleurs = {
-    salaire: "green",
-    vente: "green",
-    autre: "green",
-    loyer: "red",
-    courses: "orange",
-    transport: "brown",
-    santé: "black",
-    divertissement: "purple",
-  };
-  return couleurs[categorie] || "gray";
+  document.getElementById("soldeFC").textContent = soldeFC.toFixed(2) + " FC";
+  document.getElementById("soldeUSD").textContent = soldeUSD.toFixed(2) + " $";
 }
 
 document.addEventListener("DOMContentLoaded", () => {
