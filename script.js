@@ -1,6 +1,6 @@
 let transactions = JSON.parse(localStorage.getItem("transactions")) || [];
 
-const categoriesRevenus = ["salaire", "business", "vente", "cadeau", "autre revenu"];
+const categoriesRevenus = ["salaire", "vente", "cadeau", "autre revenu"];
 
 function getMonnaie() {
   return document.getElementById("monnaie").value;
